@@ -17,8 +17,7 @@ class ArticleCrawler:
         'Referer': "http://www.newsmth.net/nForum/",
         'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36",
         'X-Requested-With': "XMLHttpRequest",
-        'cache-control': "no-cache",
-        'Postman-Token': "81c91fb1-a034-4060-95fc-e04ee71ec462"
+        'cache-control': "no-cache"
     }
 
     def __init__(self, base_url):
