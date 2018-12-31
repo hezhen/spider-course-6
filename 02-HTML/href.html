@@ -1,11 +1,23 @@
 <html>
     <head>
             <meta charset="utf-8" />
+            <!-- <script type="javascript" src="jquery-3.3.1.js"></script>  -->
+            <script src="jquery-3.3.1.js"></script>
+
+            <script>
+                $(document).ready(function(){
+                    $("#script-demo").click(function(){
+                        $("#article-desc").hide();
+                    });
+                });
+            </script>
     </head>
     <body>
         
         <p><a href="#turmoil">巫蛊之祸</a></p>
-        <p><a href="javascript:void(0)">点击无效果</a></p>
+        <p><a id="script-demo" href="javascript:void(0)">点击无效果</a></p>
+
+        <p id="article-desc">本文是介绍汉武大帝的百科</p>
 
         <h1>早期经历</h1>
         <p>汉武帝生于汉景帝前元年（前156年），是汉景帝中子。 [4-5]  其母王氏在怀孕时，汉景帝尚为太子。王氏梦见太阳进入她的怀中，告诉汉景帝后，汉景帝说：“此贵征也。”刘彻还未出生，他的祖父汉文帝就逝世了。汉景帝即位后，刘彻出生，他亦是王氏唯一的儿子。</p>
