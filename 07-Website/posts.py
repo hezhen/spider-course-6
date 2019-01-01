@@ -4,7 +4,7 @@ import requests
 import time
 import html
 
-class ArticleCrawler:
+class PostsCrawler:
 
     headers = {
         'Accept': "*/*",
@@ -52,12 +52,12 @@ class ArticleCrawler:
 
 if __name__ == '__main__':
     url = 'http://www.newsmth.net/nForum/article/ChildEducation/806532'
-    articleCrawler = ArticleCrawler()
-    c = articleCrawler.get_pagination_content(url, 1)
-    total_pages = articleCrawler.get_total_pages(c)
-    posts = articleCrawler.get_posts(c)
+    posts_crawler = PostsCrawler()
+    c = posts_crawler.get_pagination_content(url, 1)
+    total_pages = posts_crawler.get_total_pages(c)
+    posts = posts_crawler.get_posts(c)
     print(total_pages)
     if total_pages > 1:
         for i in range(2, total_pages + 1):
-            c = articleCrawler.get_pagination_content(i)
-            posts.append(articleCrawler.get_posts(c))
+            c = posts_crawler.get_pagination_content(i)
+            posts += posts_crawler.get_posts(c)
