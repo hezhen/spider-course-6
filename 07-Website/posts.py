@@ -1,52 +1,68 @@
 import re
 from lxml import etree
 import requests
+
 import time
-import html
 import global_var
+import html
 
 class PostsCrawler:
-
-    def __init__(self, interval = 1):
-        self.pattern = re.compile('<.*?>')
-        self.interval = interval
     
-    def get_pagination_content(self, url, page_num):
-        time.sleep(self.interval)
-        querystring = {"ajax":"","p":str(page_num)}
-        response = requests.get(url, headers = global_var.headers, params=querystring)
-        return response.text
+    domain = 'https://www.newsmth.net'
+    pattern = re.compile('<.*?>')
 
-    def get_total_pages(self, content):
-        tree = etree.HTML(content)
-        page_indexes = tree.xpath('//ol[@class="page-main"]')[0].xpath('li')
+    def get_content(self, topic_url, page):
+        querystring = {"ajax":"","p":str(page)}
+        url = self.domain + topic_url
+        r = requests.get(url, params=querystring)
+        self.html = r.text
+        self.tree = etree.HTML(r.text)
+        time.sleep(global_var.crawl_interval)
+
+    def get_max_page(self):
+        pages = self.tree.xpath('//ol[@class="page-main"][1]/li')
+
+        if len(pages) == 1:
+            return 1
+
+        last_page_text = pages[len(pages)-1].xpath('a')[0].text
+
+        if last_page_text == '>>':
+            return int(pages[len(pages)-2].xpath('a')[0].text)
         
-        if len(page_indexes) == 1:
-            total_pages = 1
-        else:
-            total_pages = int(page_indexes[len(page_indexes) - 2].xpath('a')[0].text)
-        return total_pages
+        return int(last_page_text)
 
-    def get_posts(self, content):
-        tree = etree.HTML(content)
-        elements = tree.xpath('//table[@class="article"]')
+    def get_posts(self):
+        # users_eles = tree.xpath('//td[@class="a-left"]')
+        c_eles = self.tree.xpath('//td[@class="a-content"]')
         posts = []
 
-        for element in elements:
-            post = etree.tostring(elements[0].xpath('//td[@class="a-content"]')[0].xpath('p')[0])
-            post = html.unescape(article.decode('GBK')).replace('<br/>', '\n')
-            post = self.pattern.sub('', post)
+        for c_ele in c_eles:
+            post = c_ele.xpath('p')[0]
+            post = etree.tostring(post).decode('GBK')
+            post = post.replace('<br/>', '\n')
+            post = html.unescape(self.pattern.sub('', post))
             posts.append(post)
+
         return posts
 
-if __name__ == '__main__':
-    url = 'http://www.newsmth.net/nForum/article/ChildEducation/806532'
-    posts_crawler = PostsCrawler()
-    c = posts_crawler.get_pagination_content(url, 1)
-    total_pages = posts_crawler.get_total_pages(c)
-    posts = posts_crawler.get_posts(c)
-    print(total_pages)
-    if total_pages > 1:
-        for i in range(2, total_pages + 1):
-            c = posts_crawler.get_pagination_content(i)
-            posts += posts_crawler.get_posts(c)
+if __name__ == "__main__":
+    url = '/nForum/article/AutoWorld/1942271666'
+
+    post_crawler = PostsCrawler()
+    post_crawler.get_content(url, 1)
+    posts = post_crawler.get_posts()
+
+    page_count = post_crawler.get_max_page()
+
+    if page_count > 1:
+        for i in range(2, page_count + 1):
+            post_crawler.get_content(url, i)
+            posts += post_crawler.get_posts()
+            break
+    i = 1
+    for p in posts:
+        print(p)
+        print("=============================", i, "=============================")
+        print("")
+        i += 1
