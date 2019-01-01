@@ -3,20 +3,9 @@ from lxml import etree
 import requests
 import time
 import html
+import global_var
 
 class PostsCrawler:
-
-    headers = {
-        'Accept': "*/*",
-        'Accept-Encoding': "gzip, deflate",
-        'Accept-Language': "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
-        'Connection': "keep-alive",
-        'Host': "www.newsmth.net",
-        'Referer': "http://www.newsmth.net/nForum/",
-        'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36",
-        'X-Requested-With': "XMLHttpRequest",
-        'cache-control': "no-cache"
-    }
 
     def __init__(self, interval = 1):
         self.pattern = re.compile('<.*?>')
@@ -25,7 +14,7 @@ class PostsCrawler:
     def get_pagination_content(self, url, page_num):
         time.sleep(self.interval)
         querystring = {"ajax":"","p":str(page_num)}
-        response = requests.get(url, headers = self.headers, params=querystring)
+        response = requests.get(url, headers = global_var.headers, params=querystring)
         return response.text
 
     def get_total_pages(self, content):
