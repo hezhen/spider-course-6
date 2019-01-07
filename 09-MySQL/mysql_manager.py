@@ -13,8 +13,8 @@ class MysqlManager:
     }
 
     TABLES = {}
-    TABLES['article'] = (
-        "CREATE TABLE `article` ("
+    TABLES['topic'] = (
+        "CREATE TABLE `topic` ("
         "  `id` varchar(16) NOT NULL,"
         "  `title` varchar(128) NOT NULL,"
         "  `url` varchar(1024) NOT NULL,"
@@ -41,15 +41,16 @@ class MysqlManager:
 
      TABLES['post'] = (
         "CREATE TABLE `post` ("
-        "  `article_id` varchar(16) NOT NULL,"
+        "  `topic_id` varchar(16) NOT NULL,"
         "  `content` varchar(10240) NOT NULL,"
         "  `post_index` int(11) NOT NULL,"
+        "  `page_index` int(11) NOT NULL,"
         "  `author_id` varchar(32) NOT NULL,"
         "  `author_name` varchar(32) NOT NULL,"
         "  `status` char(20) NOT NULL DEFAULT 'new',"
         "  `publish_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, "
-        "  PRIMARY KEY (`article_id`), "
-        "  UNIQUE(`article_id`, `post_index`) "
+        "  PRIMARY KEY (`topic_id`), "
+        "  UNIQUE(`topic_id`, `post_index`) "
         ") ENGINE=InnoDB")
 
     def __init__(self, max_num_thread):
@@ -121,8 +122,8 @@ class MysqlManager:
             cursor.close()
             con.close()
 
-    # return False if article already exist, True otherwise        
-    def insert_article(self, id, title, url, author_id, author_name, publish_time):
+    # return False if topic already exist, True otherwise        
+    def insert_topic(self, id, title, url, author_id, author_name, publish_time):
         con = self.cnxpool.get_connection()
         cursor = con.cursor()
         try:
@@ -139,13 +140,13 @@ class MysqlManager:
             cursor.close()
             con.close()
 
-    # return False if article already exist, True otherwise        
-    def insert_post(self, article_id, content, post_index, author_id, author_name, publish_time):
+    # return False if topic already exist, True otherwise        
+    def insert_post(self, topic_id, content, post_index, page_index, author_id, author_name, publish_time):
         con = self.cnxpool.get_connection()
         cursor = con.cursor()
         try:
-            sql = "INSERT INTO board(article_id, content, post_index, author_id, author_name, publish_time) " 
-                "VALUES ('{}', '{}', '{}', '{}', '{}', '{}' )".format(article_id, content, post_index, author_id, author_name, publish_time)
+            sql = "INSERT INTO board(topic_id, content, post_index, page_index, author_id, author_name, publish_time) " 
+                "VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}' )".format(topic_id, content, post_index, page_index, author_id, author_name, publish_time)
             # print(sql)
             cursor.execute((sql))
             return True
@@ -157,16 +158,16 @@ class MysqlManager:
             cursor.close()
             con.close()
 
-    def dequeue_article(self):
+    def dequeue_topic(self):
         con = self.cnxpool.get_connection()
         cursor = con.cursor(dictionary=True)
         try:
             con.start_transaction()
             const_id = "%.9f" % time.time()
-            update_query = ("UPDATE article SET status='{}' WHERE status='new' LIMIT 1".format(const_id))
+            update_query = ("UPDATE topic SET status='{}' WHERE status='new' LIMIT 1".format(const_id))
             cursor.execute(update_query)
 
-            query = ("SELECT `url` FROM article WHERE status='{}'".format(const_id))
+            query = ("SELECT `url` FROM topic WHERE status='{}'".format(const_id))
             cursor.execute(query)
             con.commit()
 
@@ -181,16 +182,16 @@ class MysqlManager:
             cursor.close()
             con.close()
     
-    def dequeue_batch_articles(self, size):
+    def dequeue_batch_topics(self, size):
         con = self.cnxpool.get_connection()
         cursor = con.cursor(dictionary=True)
         try:
             con.start_transaction()
             const_id = "%.9f" % time.time()
-            update_query = ("UPDATE article SET status='{}' WHERE status='new' LIMIT {}".format(const_id, size))
+            update_query = ("UPDATE topic SET status='{}' WHERE status='new' LIMIT {}".format(const_id, size))
             cursor.execute(update_query)
 
-            query = ("SELECT `url` FROM article WHERE status='{}'".format(const_id))
+            query = ("SELECT `url` FROM topic WHERE status='{}'".format(const_id))
             cursor.execute(query)
             con.commit()
 
@@ -205,12 +206,12 @@ class MysqlManager:
             cursor.close()
             con.close()
 
-    def finish_article(self, index):
+    def finish_topic(self, index):
         con = self.cnxpool.get_connection()
         cursor = con.cursor()
         try:
             # we don't need to update done_time using time.strftime('%Y-%m-%d %H:%M:%S') as it's auto updated
-            update_query = ("UPDATE article SET `status`='done' WHERE `id`=%d") % (index)
+            update_query = ("UPDATE topic SET `status`='done' WHERE `id`=%d") % (index)
             cursor.execute(update_query)
         except mysql.connector.Error as err:
             # print('finishUrl() ' + err.msg)
