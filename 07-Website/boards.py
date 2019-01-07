@@ -12,8 +12,8 @@ class BoardsCrawler:
     def __init__(self, interval = 1):
         self.interval = interval
 
-    def get_board_of_section(self, seccon_idx):
-        url = self.base_url.format(seccon_idx)
+    def get_board_of_section(self, section_idx):
+        url = self.base_url.format(section_idx)
         response = requests.get(url, headers = global_var.newsmth_headers)
         time.sleep(self.interval)
         self.content = response.text

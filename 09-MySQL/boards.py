@@ -4,6 +4,8 @@ import requests
 import time
 import global_var
 
+from mysql_manager import MysqlManager
+
 class BoardsCrawler:
     domain = 'http://www.newsmth.net/'
 
@@ -12,8 +14,8 @@ class BoardsCrawler:
     def __init__(self, interval = 1):
         self.interval = interval
 
-    def get_board_of_section(self, seccon_idx):
-        url = self.base_url.format(seccon_idx)
+    def get_board_of_section(self, section_idx):
+        url = self.base_url.format(section_idx)
         response = requests.get(url, headers = global_var.newsmth_headers)
         time.sleep(self.interval)
         self.content = response.text
@@ -50,8 +52,10 @@ class BoardsCrawler:
 if __name__ == '__main__':
     boards = []
     bc = BoardsCrawler()
+    mysql = MysqlManager()
     for i in range(0,10):
         bc.get_board_of_section(i)
         boards += bc.get_board_list()
-        print(boards)
-        break
+    
+    for board in boards:
+        

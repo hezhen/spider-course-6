@@ -8,7 +8,7 @@ class MysqlManager:
     dbconfig = {
         "database": "smth",
         "user":     "root",
-        "password": "password",
+        "password": "",
         "host":     "localhost"
     }
 
@@ -114,6 +114,7 @@ class MysqlManager:
             sql = "INSERT INTO board(url, name, num_artciles, num_posts) VALUES ('{}', '{}', '{}', '{}' )".format(url, name, num_artciles, num_posts)
             # print(sql)
             cursor.execute((sql))
+            con.commit()
         except mysql.connector.Error as err:
             print('enqueue_url() ' + err.msg)
             # print("Aready exist!")
@@ -131,6 +132,7 @@ class MysqlManager:
                 "VALUES ('{}', '{}', '{}', '{}', '{}', '{}' )".format(id, title, url, author_id, author_name, publish_time)
             # print(sql)
             cursor.execute((sql))
+            con.commit()
             return True
         except mysql.connector.Error as err:
             # print('enqueue_url() ' + err.msg)
@@ -149,6 +151,7 @@ class MysqlManager:
                 "VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}' )".format(topic_id, content, post_index, page_index, author_id, author_name, publish_time)
             # print(sql)
             cursor.execute((sql))
+            con.commit()
             return True
         except mysql.connector.Error as err:
             # print('enqueue_url() ' + err.msg)
@@ -213,6 +216,7 @@ class MysqlManager:
             # we don't need to update done_time using time.strftime('%Y-%m-%d %H:%M:%S') as it's auto updated
             update_query = ("UPDATE topic SET `status`='done' WHERE `id`=%d") % (index)
             cursor.execute(update_query)
+            con.commit()
         except mysql.connector.Error as err:
             # print('finishUrl() ' + err.msg)
             return
