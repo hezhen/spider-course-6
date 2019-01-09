@@ -15,12 +15,15 @@ class MysqlManager:
     TABLES = {}
     TABLES['topic'] = (
         "CREATE TABLE `topic` ("
-        "  `id` varchar(16) NOT NULL,"
+        "  `id` varchar(16) NOT NULL AUTO_INCREAMENT,"
         "  `title` varchar(128) NOT NULL,"
         "  `url` varchar(1024) NOT NULL,"
         "  `author_id` varchar(32) NOT NULL,"
-        "  `author_name` varchar(32) NOT NULL,"
+        "  `author_url` varchar(32) NOT NULL,"
         "  `status` char(20) NOT NULL DEFAULT 'new',"
+        "  `rating` varchar(16) NOT NULL DEFAULT 0,"
+        "  `like_cnt` varchar(16) NOT NULL DEFAULT 0,"
+        "  `reply_cnt` varchar(16) NOT NULL DEFAULT 0,"
         "  `publish_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, "
         "  `queue_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, "
         "  `done_time` timestamp NOT NULL DEFAULT '1970-01-02 00:00:00' ON UPDATE CURRENT_TIMESTAMP, "
@@ -32,9 +35,11 @@ class MysqlManager:
         "CREATE TABLE `board` ("
         "  `name` varchar(64) NOT NULL,"
         "  `url` varchar(1024) NOT NULL,"
+        "  `mgr_id` varchar(32) NOT NULL,"
+        "  `mgr_url` varchar(512) NOT NULL,"
         "  `status` char(20) NOT NULL DEFAULT 'new',"
-        "  `num_artciles` int(11) NOT NULL,"
-        "  `num_posts` int(11) NOT NULL,"
+        "  `topics_cnt` int(11) NOT NULL,"
+        "  `posts_cnt` int(11) NOT NULL,"
         "  PRIMARY KEY (`name`),"
         "  UNIQUE (`url`)"
         ") ENGINE=InnoDB")
@@ -42,14 +47,8 @@ class MysqlManager:
      TABLES['post'] = (
         "CREATE TABLE `post` ("
         "  `topic_id` varchar(16) NOT NULL,"
-        "  `content` varchar(10240) NOT NULL,"
-        "  `post_index` int(11) NOT NULL,"
-        "  `page_index` int(11) NOT NULL,"
-        "  `author_id` varchar(32) NOT NULL,"
-        "  `author_name` varchar(32) NOT NULL,"
-        "  `status` char(20) NOT NULL DEFAULT 'new',"
-        "  `publish_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, "
-        "  PRIMARY KEY (`topic_id`), "
+        "  `content` varchar(10240) NOT NULL DEFAULT '',"
+        "  `post_index` int(11) NOT NULL DEFAULT 0,"
         "  UNIQUE(`topic_id`, `post_index`) "
         ") ENGINE=InnoDB")
 
@@ -107,11 +106,14 @@ class MysqlManager:
                 print('Tables created')
 
 
-    def insert_board(self, url, name, num_artciles, num_posts):
+    def insert_board(self, board):
         con = self.cnxpool.get_connection()
         cursor = con.cursor()
         try:
-            sql = "INSERT INTO board(url, name, num_artciles, num_posts) VALUES ('{}', '{}', '{}', '{}' )".format(url, name, num_artciles, num_posts)
+            sql = "INSERT INTO board(url, name, mgr_id, mgr_url, topics_cnt, posts_cnt) " 
+                "VALUES ('{}', '{}', '{}', '{}', '{}', '{}' )"
+                .format(board['board_url'], board['board_title'], board['manager_id'],
+                board['manager_url'], board['num_topics'], board['num_posts'])
             # print(sql)
             cursor.execute((sql))
             con.commit()
@@ -124,12 +126,16 @@ class MysqlManager:
             con.close()
 
     # return False if topic already exist, True otherwise        
-    def insert_topic(self, id, title, url, author_id, author_name, publish_time):
+    def insert_topic(self, topic):
         con = self.cnxpool.get_connection()
         cursor = con.cursor()
         try:
-            sql = "INSERT INTO board(id, title, url, author_id, author_name, publish_time) " 
-                "VALUES ('{}', '{}', '{}', '{}', '{}', '{}' )".format(id, title, url, author_id, author_name, publish_time)
+            sql = "INSERT INTO board(title, url, author_id, author_url, publish_time),"
+                "rating, like_cnt, reply_cnt" 
+                "VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}' )".format(
+                topic['title'], topic['url'], topic['author_id'], 
+                topic['author_url'], topic['publish_time'], topic['rating'],
+                topic['num_likes'], topic['num_replies'])
             # print(sql)
             cursor.execute((sql))
             con.commit()
@@ -143,12 +149,13 @@ class MysqlManager:
             con.close()
 
     # return False if topic already exist, True otherwise        
-    def insert_post(self, topic_id, content, post_index, page_index, author_id, author_name, publish_time):
+    def insert_post(self, post): #topic_id, content, post_index, page_index, author_id, author_name, publish_time):
         con = self.cnxpool.get_connection()
         cursor = con.cursor()
         try:
-            sql = "INSERT INTO board(topic_id, content, post_index, page_index, author_id, author_name, publish_time) " 
-                "VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}' )".format(topic_id, content, post_index, page_index, author_id, author_name, publish_time)
+            sql = "INSERT INTO board(topic_id, content, post_index) " 
+                "VALUES ('{}', '{}', '{}' )".format(
+                post['topic_id'], post['content'], post['post_index'])
             # print(sql)
             cursor.execute((sql))
             con.commit()

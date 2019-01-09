@@ -32,7 +32,7 @@ class BoardsCrawler:
             if len(columns) == 1:
                 break
             board['board_url'] = columns[0].xpath('a')[0].attrib['href']
-            board['board_title'] = columns[0].xpath('a')[0].text
+            board['board_name'] = columns[0].xpath('a')[0].text
 
             if len(columns[1].xpath('a')) == 0:
                 url = self.domain + board['board_url']
@@ -52,10 +52,11 @@ class BoardsCrawler:
 if __name__ == '__main__':
     boards = []
     bc = BoardsCrawler()
-    mysql = MysqlManager()
+    mysql_mgr = MysqlManager(4)
     for i in range(0,10):
         bc.get_board_of_section(i)
         boards += bc.get_board_list()
+
     
     for board in boards:
-        
+        mysql_mgr.insert_board(board)
