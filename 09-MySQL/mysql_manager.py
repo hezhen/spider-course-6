@@ -15,18 +15,18 @@ class MysqlManager:
     TABLES = {}
     TABLES['topic'] = (
         "CREATE TABLE `topic` ("
-        "  `id` varchar(16) NOT NULL AUTO_INCREAMENT,"
+        "  `id` int AUTO_INCREMENT,"
         "  `title` varchar(128) NOT NULL,"
         "  `url` varchar(1024) NOT NULL,"
         "  `author_id` varchar(32) NOT NULL,"
         "  `author_url` varchar(32) NOT NULL,"
-        "  `status` char(20) NOT NULL DEFAULT 'new',"
-        "  `rating` varchar(16) NOT NULL DEFAULT 0,"
-        "  `like_cnt` varchar(16) NOT NULL DEFAULT 0,"
-        "  `reply_cnt` varchar(16) NOT NULL DEFAULT 0,"
-        "  `publish_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, "
-        "  `queue_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, "
-        "  `done_time` timestamp NOT NULL DEFAULT '1970-01-02 00:00:00' ON UPDATE CURRENT_TIMESTAMP, "
+        "  `status` varchar(16) NOT NULL DEFAULT 'new',"
+        "  `rating` int NOT NULL DEFAULT 0,"
+        "  `like_cnt` int NOT NULL DEFAULT 0,"
+        "  `reply_cnt` int NOT NULL DEFAULT 0,"
+        "  `publish_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+        "  `queue_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+        "  `done_time` timestamp NOT NULL DEFAULT '1970-01-02 00:00:00' ON UPDATE CURRENT_TIMESTAMP,"
         "  PRIMARY KEY (`id`),"
         "  UNIQUE (`url`)"
         ") ENGINE=InnoDB")
@@ -231,4 +231,3 @@ class MysqlManager:
 
 if __name__ == "__main__":
     mysql_mgr = MysqlManager(8)
-    print(mysql_mgr.dequeue_batch_urls(10))
