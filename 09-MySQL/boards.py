@@ -6,6 +6,8 @@ import global_var
 
 from mysql_manager import MysqlManager
 
+mysql_mgr = MysqlManager(4)
+
 class BoardsCrawler:
     domain = 'http://www.newsmth.net/'
 
@@ -46,17 +48,14 @@ class BoardsCrawler:
             board['num_topics'] = columns[5].text
             board['num_posts'] = columns[6].text
             boards.append(board)
+            mysql_mgr.insert_board(board)
             
         return boards
 
 if __name__ == '__main__':
-    boards = []
     bc = BoardsCrawler()
-    mysql_mgr = MysqlManager(4)
-    for i in range(0,10):
-        bc.get_board_of_section(i)
-        boards += bc.get_board_list()
-
     
-    for board in boards:
-        mysql_mgr.insert_board(board)
+    for i in range(0,10):
+        print("Get board of section: ", i)
+        bc.get_board_of_section(i)
+        boards = bc.get_board_list()

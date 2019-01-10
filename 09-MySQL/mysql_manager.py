@@ -37,14 +37,13 @@ class MysqlManager:
         "  `url` varchar(1024) NOT NULL,"
         "  `mgr_id` varchar(32) NOT NULL,"
         "  `mgr_url` varchar(512) NOT NULL,"
-        "  `status` char(20) NOT NULL DEFAULT 'new',"
         "  `topics_cnt` int(11) NOT NULL,"
         "  `posts_cnt` int(11) NOT NULL,"
         "  PRIMARY KEY (`name`),"
         "  UNIQUE (`url`)"
         ") ENGINE=InnoDB")
 
-     TABLES['post'] = (
+    TABLES['post'] = (
         "CREATE TABLE `post` ("
         "  `topic_id` varchar(16) NOT NULL,"
         "  `content` varchar(10240) NOT NULL DEFAULT '',"
@@ -110,15 +109,14 @@ class MysqlManager:
         con = self.cnxpool.get_connection()
         cursor = con.cursor()
         try:
-            sql = "INSERT INTO board(url, name, mgr_id, mgr_url, topics_cnt, posts_cnt) " 
-                "VALUES ('{}', '{}', '{}', '{}', '{}', '{}' )"
-                .format(board['board_url'], board['board_title'], board['manager_id'],
-                board['manager_url'], board['num_topics'], board['num_posts'])
-            # print(sql)
+            sql = "INSERT INTO board(url, name, mgr_id, mgr_url, topics_cnt, posts_cnt) VALUES ('{}', '{}', '{}', '{}', {}, {} )".format(
+            board['board_url'], board['board_name'], board['manager_id'],
+            board['manager_url'], board['num_topics'], board['num_posts'])
+            print(sql)
             cursor.execute((sql))
             con.commit()
         except mysql.connector.Error as err:
-            print('enqueue_url() ' + err.msg)
+            print('insert_board() ' + err.msg)
             # print("Aready exist!")
             return
         finally:
@@ -131,11 +129,11 @@ class MysqlManager:
         cursor = con.cursor()
         try:
             sql = "INSERT INTO board(title, url, author_id, author_url, publish_time),"
-                "rating, like_cnt, reply_cnt" 
-                "VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}' )".format(
-                topic['title'], topic['url'], topic['author_id'], 
-                topic['author_url'], topic['publish_time'], topic['rating'],
-                topic['num_likes'], topic['num_replies'])
+            "rating, like_cnt, reply_cnt" 
+            "VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}' )".format(
+            topic['title'], topic['url'], topic['author_id'], 
+            topic['author_url'], topic['publish_time'], topic['rating'],
+            topic['num_likes'], topic['num_replies'])
             # print(sql)
             cursor.execute((sql))
             con.commit()
@@ -154,8 +152,8 @@ class MysqlManager:
         cursor = con.cursor()
         try:
             sql = "INSERT INTO board(topic_id, content, post_index) " 
-                "VALUES ('{}', '{}', '{}' )".format(
-                post['topic_id'], post['content'], post['post_index'])
+            "VALUES ('{}', '{}', '{}' )".format(
+            post['topic_id'], post['content'], post['post_index'])
             # print(sql)
             cursor.execute((sql))
             con.commit()

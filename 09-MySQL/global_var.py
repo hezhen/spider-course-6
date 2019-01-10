@@ -1,4 +1,4 @@
-headers = {
+newsmth_headers = {
     'Host': "www.newsmth.net",
     'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:64.0) Gecko/20100101 Firefox/64.0",
     'Accept': "application/json, text/javascript, */*; q=0.01",
