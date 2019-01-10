@@ -22,7 +22,7 @@ class MysqlManager:
         "  `url` varchar(1024) NOT NULL,"
         "  `author_id` varchar(32) NOT NULL,"
         "  `author_url` varchar(32) NOT NULL,"
-        "  `status` varchar(16) NOT NULL DEFAULT 'new',"
+        "  `status` varchar(32) NOT NULL DEFAULT 'new',"
         "  `rating` int NOT NULL DEFAULT 0,"
         "  `like_cnt` int NOT NULL DEFAULT 0,"
         "  `reply_cnt` int NOT NULL DEFAULT 0,"
@@ -49,7 +49,7 @@ class MysqlManager:
         "CREATE TABLE `post` ("
         "  `topic_id` varchar(16) NOT NULL,"
         "  `content` varchar(10240) NOT NULL DEFAULT '',"
-        "  `post_index` int(11) NOT NULL DEFAULT 0,"
+        "  `post_index` int NOT NULL DEFAULT 0,"
         "  UNIQUE(`topic_id`, `post_index`) "
         ") ENGINE=InnoDB")
 
@@ -152,19 +152,18 @@ class MysqlManager:
             con.close()
 
     # return False if topic already exist, True otherwise        
-    def insert_post(self, post): #topic_id, content, post_index, page_index, author_id, author_name, publish_time):
+    def insert_post(self, post): 
         con = self.cnxpool.get_connection()
         cursor = con.cursor()
         try:
-            sql = "INSERT INTO post(topic_id, content, post_index) "
-            "VALUES ('{}', '{}', '{}' )".format(
+            sql = "INSERT INTO post(topic_id, content, post_index) VALUES ('{}', '{}', '{}' )".format(
             post['topic_id'], post['content'], post['post_index'])
             # print(sql)
             cursor.execute((sql))
             con.commit()
             return True
         except mysql.connector.Error as err:
-            # print('enqueue_url() ' + err.msg)
+            print('insert_post() ' + err.msg)
             # print("Aready exist!")
             return False
         finally:
@@ -176,18 +175,18 @@ class MysqlManager:
         cursor = con.cursor(dictionary=True)
         try:
             con.start_transaction()
-            const_id = "%.9f" % time.time()
+            const_id = ("%.9f" % time.time())[4:]
             update_query = ("UPDATE topic SET status='{}' WHERE status='new' LIMIT 1".format(const_id))
             cursor.execute(update_query)
-
-            query = ("SELECT `url` FROM topic WHERE status='{}'".format(const_id))
-            cursor.execute(query)
             con.commit()
-
+            
+            query = ("SELECT url, id FROM topic WHERE status='{}'".format(const_id))
+            cursor.execute(query)
+            
             row = cursor.fetchone()
             if row is None:
                 return None
-            return row['url']
+            return row
         except mysql.connector.Error as err:
             print('dequeueUrl() ' + err.msg)
             return None
@@ -200,13 +199,13 @@ class MysqlManager:
         cursor = con.cursor(dictionary=True)
         try:
             con.start_transaction()
-            const_id = "%.9f" % time.time()
+            const_id = ("%.9f" % time.time())[4:]
             update_query = ("UPDATE topic SET status='{}' WHERE status='new' LIMIT {}".format(const_id, size))
             cursor.execute(update_query)
-
-            query = ("SELECT `url` FROM topic WHERE status='{}'".format(const_id))
-            cursor.execute(query)
             con.commit()
+
+            query = ("SELECT url, id FROM topic WHERE status='{}'".format(const_id))
+            cursor.execute(query)
 
             rows = cursor.fetchall()
             if rows is None:

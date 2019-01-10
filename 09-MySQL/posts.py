@@ -6,6 +6,10 @@ import time
 import global_var
 import html
 
+from mysql_manager import MysqlManager
+
+mysql_mgr = MysqlManager(4)
+
 class PostsCrawler:
     
     domain = 'https://www.newsmth.net'
@@ -47,22 +51,27 @@ class PostsCrawler:
         return posts
 
 if __name__ == "__main__":
-    url = '/nForum/article/AutoWorld/1942271666'
+
+    topic = mysql_mgr.dequeue_topic()
 
     post_crawler = PostsCrawler()
-    post_crawler.get_content(url, 1)
+    post_crawler.get_content(topic['url'], 1)
     posts = post_crawler.get_posts()
 
     page_count = post_crawler.get_max_page()
 
     if page_count > 1:
         for i in range(2, page_count + 1):
-            post_crawler.get_content(url, i)
+            post_crawler.get_content(topic['url'], i)
             posts += post_crawler.get_posts()
             break
     i = 1
     for p in posts:
-        print(p)
-        print("=============================", i, "=============================")
-        print("")
+        post = {}
+        post['topic_id'] = topic['id']
+        post['content'] = p
+        post['post_index'] = i
+        mysql_mgr.insert_post(post)
         i += 1
+
+    mysql_mgr.finish_topic(topic['id'])
