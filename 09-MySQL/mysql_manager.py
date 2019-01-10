@@ -3,6 +3,8 @@ from mysql.connector import errorcode
 from mysql.connector import pooling
 import time 
 
+import re
+
 class MysqlManager:
     
     dbconfig = {
@@ -109,7 +111,8 @@ class MysqlManager:
         con = self.cnxpool.get_connection()
         cursor = con.cursor()
         try:
-            sql = "INSERT INTO board(url, name, mgr_id, mgr_url, topics_cnt, posts_cnt) VALUES ('{}', '{}', '{}', '{}', {}, {} )".format(
+            sql = ("INSERT INTO board(url, name, mgr_id, mgr_url, topics_cnt, posts_cnt)"
+            "VALUES ('{}', '{}', '{}', '{}', {}, {} )").format(
             board['board_url'], board['board_name'], board['manager_id'],
             board['manager_url'], board['num_topics'], board['num_posts'])
             print(sql)
@@ -128,9 +131,11 @@ class MysqlManager:
         con = self.cnxpool.get_connection()
         cursor = con.cursor()
         try:
-            sql = "INSERT INTO board(title, url, author_id, author_url, publish_time),"
-            "rating, like_cnt, reply_cnt" 
-            "VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}' )".format(
+            if re.match('\d\d\:\d\d:\d\d', topic['publish_time']):
+                topic['publish_time'] = (time.strftime("%Y-%m-%d ", time.localtime()) + topic['publish_time']).strip()
+            sql = ("INSERT INTO topic(title, url, author_id, author_url, publish_time,"
+            "rating, like_cnt, reply_cnt) "
+            "VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}' )").format(
             topic['title'], topic['url'], topic['author_id'], 
             topic['author_url'], topic['publish_time'], topic['rating'],
             topic['num_likes'], topic['num_replies'])
@@ -139,7 +144,7 @@ class MysqlManager:
             con.commit()
             return True
         except mysql.connector.Error as err:
-            # print('enqueue_url() ' + err.msg)
+            # print('insert_topic() ' + err.msg)
             # print("Aready exist!")
             return False
         finally:
@@ -151,7 +156,7 @@ class MysqlManager:
         con = self.cnxpool.get_connection()
         cursor = con.cursor()
         try:
-            sql = "INSERT INTO board(topic_id, content, post_index) " 
+            sql = "INSERT INTO post(topic_id, content, post_index) "
             "VALUES ('{}', '{}', '{}' )".format(
             post['topic_id'], post['content'], post['post_index'])
             # print(sql)

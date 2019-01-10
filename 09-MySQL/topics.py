@@ -2,6 +2,10 @@ from lxml import etree
 import re
 import requests
 
+from mysql_manager import MysqlManager
+
+mysql_mgr = MysqlManager(4)
+
 class TopicsCrawler:
 
     domain = 'https://www.newsmth.net'
@@ -37,29 +41,23 @@ class TopicsCrawler:
         tt = columns[index].text
         return tt if tt is not None else 0
 
-    def get_post_list(self):
+    def get_topic_list(self):
         rows = self.tree.xpath("//table[@class='board-list tiz']/tbody/tr")
 
-        posts = []
-
         for row in rows:
-            post = {}
+            topic = {}
             columns = row.xpath('td')
-            post['title'], post['url'] = self.extract_tag_a(columns, 1)
-            post['publish_time'] = self.extract_text(columns, 2)
+            topic['title'], topic['url'] = self.extract_tag_a(columns, 1)
+            topic['publish_time'] = self.extract_text(columns, 2)
             
-            post['author_id'], post['author_url'] = self.extract_tag_a(columns, 3)
-            post['rating'] = self.extract_text(columns, 4)
-            post['num_likes'] = self.extract_text(columns, 5)
-            post['num_replies'] = self.extract_text(columns, 6)
-            
-            posts.append(post)
+            topic['author_id'], topic['author_url'] = self.extract_tag_a(columns, 3)
+            topic['rating'] = self.extract_text(columns, 4)
+            topic['num_likes'] = self.extract_text(columns, 5)
+            topic['num_replies'] = self.extract_text(columns, 6)
+            mysql_mgr.insert_topic(topic)
         
-        return posts
-
 if __name__ == "__main__":
     plc = TopicsCrawler()
     content = plc.get_content('/nForum/board/AutoWorld', 1)
     print(plc.get_max_page())
-    for post in plc.get_post_list():
-        print(post)
+    plc.get_topic_list()
