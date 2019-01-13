@@ -52,39 +52,43 @@ class PostsCrawler:
 
 if __name__ == "__main__":
     
-    # Get a topic to grab its content
-    topic = mysql_mgr.dequeue_topic()
+    while True:
+        # Get a topic to grab its content
+        topic = mysql_mgr.dequeue_topic()
 
-    # Get 1st page of this topic
-    post_crawler = PostsCrawler()
-    post_crawler.get_content(topic['url'], 1)
-    posts = post_crawler.get_posts()
+        if topic is None:
+            exit(1)
 
-    # Get number of pages of this topic
-    page_count = post_crawler.get_max_page()
+        # Get 1st page of this topic
+        post_crawler = PostsCrawler()
+        post_crawler.get_content(topic['url'], 1)
+        posts = post_crawler.get_posts()
 
-    # Get the rest posts of this topic
-    if page_count > 1:
-        for i in range(2, page_count + 1):
-            post_crawler.get_content(url, i)
-            posts += post_crawler.get_posts()
-            break
-    
-    # Insert post of a topic
-    i = 1
-    for p in posts:
-        print(p)
-        print("=============================", i, "=============================")
-        print("")
+        # Get number of pages of this topic
+        page_count = post_crawler.get_max_page()
 
-        # Compose the post object
-        post = {}
-        post['topic_id'] = topic['id']
-        post['content'] = p
-        post['post_index'] = i
-        mysql_mgr.insert_post(post)
+        # Get the rest posts of this topic
+        if page_count > 1:
+            for i in range(2, page_count + 1):
+                post_crawler.get_content(url, i)
+                posts += post_crawler.get_posts()
+                break
+        
+        # Insert post of a topic
+        i = 1
+        for p in posts:
+            print(p)
+            print("=============================", i, "=============================")
+            print("")
 
-        i += 1
-    
-    # Mark this topic as finished downloading
-    mysql_mgr.finish_topic(topic['id'])
+            # Compose the post object
+            post = {}
+            post['topic_id'] = topic['id']
+            post['content'] = p
+            post['post_index'] = i
+            mysql_mgr.insert_post(post)
+
+            i += 1
+        
+        # Mark this topic as finished downloading
+        mysql_mgr.finish_topic(topic['id'])
