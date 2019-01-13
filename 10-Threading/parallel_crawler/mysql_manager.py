@@ -10,7 +10,7 @@ class MysqlManager:
     dbconfig = {
         "database": "smth",
         "user":     "root",
-        "password": "",
+        "password": "password",
         "host":     "localhost"
     }
 
@@ -180,7 +180,7 @@ class MysqlManager:
             cursor.execute(update_query)
             con.commit()
             
-            query = ("SELECT url, id FROM topic WHERE status='{}'".format(const_id))
+            query = ("SELECT url, id, title FROM topic WHERE status='{}'".format(const_id))
             cursor.execute(query)
             
             row = cursor.fetchone()

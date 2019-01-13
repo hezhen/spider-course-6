@@ -7,12 +7,12 @@ import html
 from mysql_manager import MysqlManager
 from crawler import PostsCrawler
 
-int max_threads = 10
-int wait_duration = 20
+max_threads = 10
+wait_duration = 20
 
 mysql_mgr = MysqlManager(10)
 
-def post_crawl_task(tpoic):
+def post_crawl_task(topic):
         # Get 1st page of this topic
         post_crawler = PostsCrawler()
         post_crawler.get_content(topic['url'], 1)
@@ -24,16 +24,16 @@ def post_crawl_task(tpoic):
         # Get the rest posts of this topic
         if page_count > 1:
             for i in range(2, page_count + 1):
-                post_crawler.get_content(url, i)
+                post_crawler.get_content(topic['url'], i)
                 posts += post_crawler.get_posts()
                 break
         
         # Insert post of a topic
         i = 1
         for p in posts:
-            print(p)
-            print("=============================", i, "=============================")
-            print("")
+            # print(p)
+            # print("=============================", i, "=============================")
+            # print("")
 
             # Compose the post object
             post = {}
@@ -66,6 +66,9 @@ if __name__ == "__main__":
         if topic is None:
             wait_tasks_done(pool)
             exit(1)
+        
+        print(topic['title'])
+        print(topic['url'])
 
         task = Thread(target=post_crawl_task, args=(topic,))
         task.start()

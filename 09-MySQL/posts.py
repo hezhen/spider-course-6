@@ -70,7 +70,7 @@ if __name__ == "__main__":
         # Get the rest posts of this topic
         if page_count > 1:
             for i in range(2, page_count + 1):
-                post_crawler.get_content(url, i)
+                post_crawler.get_content(topic['url'], i)
                 posts += post_crawler.get_posts()
                 break
         

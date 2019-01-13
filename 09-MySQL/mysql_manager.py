@@ -10,7 +10,7 @@ class MysqlManager:
     dbconfig = {
         "database": "smth",
         "user":     "root",
-        "password": "",
+        "password": "password",
         "host":     "localhost"
     }
 
