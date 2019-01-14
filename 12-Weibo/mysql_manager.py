@@ -44,7 +44,9 @@ class MysqlManager:
     TABLES['comment'] = (
         "CREATE TABLE `comment` ("
         "  `author_id` varchar(64) NOT NULL,"
+        "  `author_name` varchar(64) NOT NULL,"
         "  `text` varchar(32) NOT NULL,"
+        "  `comment_id` varchar(32) NOT NULL,"
         "  `post_id` int NOT NULL, "
         "  `publish_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP"
         ") ENGINE=InnoDB")

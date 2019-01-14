@@ -8,6 +8,7 @@ import re
 import json
 import argparse
 from media_loader import MediaLoader
+import datetime
 
 cookie_fn = 'cookie'
 
@@ -77,6 +78,10 @@ class WeiboFeedCrawler:
         if key in data:
             return data[key]
         return ''
+    
+    # Convert 'Wed Jan 09 23:21:36 +0800 2019' to 2019-01-09 23:21:36
+    def convert_time(ctime):
+        return datetime.datetime.strptime(ctime, "%a %b %d %H:%M:%S %z %Y").strftime('%Y-%m-%d %H:%M:%S')
 
     def get_post(self):
         self.post_response = requests.get(self.post_url, headers = self.headers)
@@ -125,10 +130,13 @@ class WeiboFeedCrawler:
         self.max_id = replies['data']['max_id']
 
         for reply in replies['data']['data']:
-            r_text = reply['text']
-            r_text = self.pattern.sub('', r_text)
-            self.replies.append(r_text)
-            print('Reply:-------------\r\n', r_text)
+            r['text'] = reply['text']
+            r['text'] = self.pattern.sub('', r['text'])
+            r['time'] = reply['created_at']
+            r['screen_name'] = reply['user']['screen_name']
+            r['user_id'] = reply['user']['id']
+            self.replies.append(r)
+            # print('Reply:-------------\r\n', r_text)
         
         if len(self.replies) < self.reply_limit:
             self.get_replies()
