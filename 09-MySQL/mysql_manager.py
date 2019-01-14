@@ -170,6 +170,7 @@ class MysqlManager:
             cursor.close()
             con.close()
 
+    # return None if no more new topic for crawling, spider should quit in this case
     def dequeue_topic(self):
         con = self.cnxpool.get_connection()
         cursor = con.cursor(dictionary=True)
