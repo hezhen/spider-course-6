@@ -204,7 +204,7 @@ class MysqlManager:
             cursor.execute(update_query)
             con.commit()
 
-            query = ("SELECT url, id FROM topic WHERE status='{}'".format(const_id))
+            query = ("SELECT url, id, title FROM topic WHERE status='{}'".format(const_id))
             cursor.execute(query)
 
             rows = cursor.fetchall()
