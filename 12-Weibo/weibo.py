@@ -14,6 +14,8 @@ from mysql_manager import MysqlManager
 cookie_fn = 'cookie'
 mysql_manager = MysqlManager(2)
 
+data_dir = './data'
+
 class WeiboFeedCrawler:
     login_url = "https://passport.weibo.cn/sso/login"
 
@@ -43,6 +45,9 @@ class WeiboFeedCrawler:
 
     payload = "username={}&password={}&savestate=1&ec=0&entry=mweibo&mainpageflag=1"
 
+    post_idx = 0
+    post_page_idx = 0
+
     def __init__(self, url, reply_limit = 0):
         self.post_url = re.sub('http[s]?://.*?/', 'https://m.weibo.cn/', url)
         self.username = '18600663368'
@@ -59,7 +64,7 @@ class WeiboFeedCrawler:
             self.load_cookie()
             return
         # TODO: Use selenium to login
-        response = requests.request("POST", self.login_url, data=self.payload, headers=self.login_headers)
+        response = requests.post(self.login_url, data=self.payload, headers=self.login_headers)
         cookie = ''
         for k,v in response.cookies.iteritems():
             cookie += k + '=' + v + ';'
@@ -85,12 +90,22 @@ class WeiboFeedCrawler:
     def convert_time(ctime):
         return datetime.datetime.strptime(ctime, "%a %b %d %H:%M:%S %z %Y").strftime('%Y-%m-%d %H:%M:%S')
 
+    def check_dir():
+        # 检查用于存储网页文件夹是否存在，不存在则创建
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+    
+    def save_data(filename, c):
+        self.check_dir()
+        with open(data_dir + '/' + filename) as f:
+            f.write(c)
+
     def get_post(self):
         self.post_response = requests.get(self.post_url, headers = self.headers)
-        c = self.post_response.text
+        c = self.post_response.text        
 
         match_objs = re.findall(r'var\s*\$render_data\s*=\s*([\s\S]*)\[0\]\s\|\|\s\{\};', c)
-        if len(match_objs) > 0:
+        if len(match_objs) > 0:            
             render_data = json.loads(match_objs[0])[0]
             # In case of re-post
             if 'retweeted_status' in render_data['status']:
@@ -113,6 +128,8 @@ class WeiboFeedCrawler:
             self.post['repost_cnt'] = render_data['reposts_count']
             self.post['publish_time'] = self.convert_time(render_data['created_at'])
 
+            self.save_data( self.post['id'] + '.json', match_objs[0])
+
             # resize the limit according to size of replies
             self.reply_limit = min(self.reply_limit, self.reply_count)
 
@@ -133,6 +150,8 @@ class WeiboFeedCrawler:
             reply_url = self.reply_url_1.format(self.id, self.mid, self.max_id)
         print(reply_url)
         response = requests.get(reply_url, headers = self.headers)
+        self.save_data( self.post['id'] + '_{}.json'.format(self.post_page_idx)', match_objs[0])
+        post_page_idx += 1
         
         replies = json.loads(response.text)
         self.max_id = replies['data']['max_id']
@@ -144,8 +163,10 @@ class WeiboFeedCrawler:
             r['user_name'] = reply['user']['screen_name']
             r['user_id'] = reply['user']['id']
             r['post_id'] = reply['id']
+            r['idx'] = self.post_idx
+            self.post_idx += 1
             mysql_manager.insert_data(r, 'comment')
-            self.replies.append(r)
+            self.replies.append(r)            
             # print('Reply:-------------\r\n', r_text)
         
         if len(self.replies) < self.reply_limit:
