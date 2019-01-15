@@ -17,38 +17,36 @@ class MysqlManager:
     TABLES = {}
     TABLES['post'] = (
         "CREATE TABLE `post` ("
-        "  `id` int AUTO_INCREMENT,"
-        "  `url` varchar(1024) NOT NULL,"
-        "  `title` varchar(128) NOT NULL,"
-        "  `author_id` varchar(32) NOT NULL,"
-        "  `content1` varchar(200) NOT NULL,"
-        "  `content2` varchar(200) NOT NULL DEFAULT 'new',"
-        "  `comment_cnt` int NOT NULL DEFAULT 0,"
-        "  `like_cnt` int NOT NULL DEFAULT 0,"
-        "  `repost_cnt` int NOT NULL DEFAULT 0,"
-        "  `publish_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+        "  `id` bigint NOT NULL,"
+        "  `user_id` bigint NOT NULL,"
+        "  `text` varchar(160) NOT NULL,"
+        "  `screen_name` varchar(32) NOT NULL,"
+        "  `reposts_count` int NOT NULL,"
+        "  `comments_count` int NOT NULL,"
+        "  `attitudes_count` int NOT NULL,"
+        "  `profile_image_url` varchar(320) NOT NULL DEFAULT '',"
+        "  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,"
         "  `queue_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,"
-        "  PRIMARY KEY (`id`),"
-        "  UNIQUE (`url`)"
+        "  PRIMARY KEY (`id`)"
         ") ENGINE=InnoDB")
 
-    TABLES['picture'] = (
-        "CREATE TABLE `picture` ("
-        "  `id` int NOT NULL,"
-        "  `post_id` int NOT NULL default 0,"
+    TABLES['pic'] = (
+        "CREATE TABLE `pic` ("
+        "  `post_id` bigint NOT NULL,"
         "  `url` varchar(1024) NOT NULL,"
-        "  UNIQUE (`url`), "
-        "  UNIQUE (`post_id`, `id`) "
+        "  UNIQUE (`url`)"
         ") ENGINE=InnoDB")
 
     TABLES['comment'] = (
         "CREATE TABLE `comment` ("
-        "  `author_id` varchar(64) NOT NULL,"
-        "  `author_name` varchar(64) NOT NULL,"
-        "  `text` varchar(32) NOT NULL,"
-        "  `comment_id` varchar(32) NOT NULL,"
-        "  `post_id` int NOT NULL, "
-        "  `publish_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP"
+        "  `post_id` bigint NOT NULL,"
+        "  `id` bigint NOT NULL,"
+        "  `user_id` bigint NOT NULL,"
+        "  `text` varchar(160) NOT NULL,"
+        "  `screen_name` varchar(32) NOT NULL,"
+        "  `profile_image_url` varchar(320) NOT NULL DEFAULT '',"
+        "  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+        "  PRIMARY KEY (`id`)"
         ") ENGINE=InnoDB")
 
     def __init__(self, max_num_thread):
@@ -83,6 +81,7 @@ class MysqlManager:
                                                           pool_size = max_num_thread,
                                                           **self.dbconfig)
 
+
     def create_database(self, cursor):
         try:
             cursor.execute(
@@ -103,42 +102,38 @@ class MysqlManager:
             else:
                 print('Tables created')
 
-    def get_table_column_keys(create_table_sql):
-        s = re.findall(r'\((.*)\)', create_table_sql)[0]
-        keys = re.findall(r'\s\`(.*?)\`\s', s)
-        return keys
+    # Give a create table sql, return its columns
+    def get_table_column_keys(self, sql):
+        return re.findall(r'\s\s\`(.*?)\`\s', sql)
 
-    def combine_insert_sql( table_name, data):
-        # auto extract columns
+    def get_insert_sql(self, table_name, data):
         columns = self.get_table_column_keys(self.TABLES[table_name])
 
-        sql0 = 'INSERT INTO ' + table_name + '('
+        sql0 = 'INSERT INTO {}('.format(table_name)
         sql1 = 'VALUES ('
 
         for col in columns:
             if col in data:
-                sql0 += col + ', '
-                sql1 += "'" + data[col] + "', "
+                sql0 += col + ','
+                sql1 += "'{}',".format(data[col])
+        
+        sql0 = sql0[:-1]
+        sql1 = sql1[:-1]
 
-        sql0 = sql0[:-2]
-        sql1 += ')'
-        sql1 = sql1[:-2]
-        return sql0 + ') ' + sql1
+        return sql0 + ')' + sql1 + ')'
 
-    # return False if topic already exist, True otherwise        
-    def insert_data(self, data, table_name):
+    def insert_data(self, table_name, data):
         con = self.cnxpool.get_connection()
         cursor = con.cursor()
         try:
-            self.combine_insert_sql(table_name, data)
+            sql = self.get_insert_sql(table_name, data)
             print(sql)
             cursor.execute((sql))
             con.commit()
-            return True
         except mysql.connector.Error as err:
-            # print('insert_topic() ' + err.msg)
+            print('insert_data() ' + err.msg)
             # print("Aready exist!")
-            return False
+            return
         finally:
             cursor.close()
             con.close()
