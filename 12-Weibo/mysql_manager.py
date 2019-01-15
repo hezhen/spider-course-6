@@ -17,10 +17,11 @@ class MysqlManager:
     TABLES = {}
     TABLES['post'] = (
         "CREATE TABLE `post` ("
-        "  `id` int AUTO_INCREMENT,"
+        "  `id` bigint NOT NULL,"
         "  `url` varchar(1024) NOT NULL,"
         "  `title` varchar(128) NOT NULL,"
-        "  `author_id` varchar(32) NOT NULL,"
+        "  `user_id` varchar(32) NOT NULL,"
+        "  `user_name` varchar(32) NOT NULL,"
         "  `content1` varchar(200) NOT NULL,"
         "  `content2` varchar(200) NOT NULL DEFAULT 'new',"
         "  `comment_cnt` int NOT NULL DEFAULT 0,"
@@ -34,20 +35,20 @@ class MysqlManager:
 
     TABLES['picture'] = (
         "CREATE TABLE `picture` ("
-        "  `id` int NOT NULL,"
-        "  `post_id` int NOT NULL default 0,"
+        "  `idx` int NOT NULL,"
+        "  `post_id` bigint NOT NULL default 0,"
         "  `url` varchar(1024) NOT NULL,"
         "  UNIQUE (`url`), "
-        "  UNIQUE (`post_id`, `id`) "
+        "  UNIQUE (`post_id`, `idx`) "
         ") ENGINE=InnoDB")
 
     TABLES['comment'] = (
         "CREATE TABLE `comment` ("
-        "  `author_id` varchar(64) NOT NULL,"
-        "  `author_name` varchar(64) NOT NULL,"
+        "  `user_id` varchar(64) NOT NULL,"
+        "  `user_name` varchar(64) NOT NULL,"
         "  `text` varchar(32) NOT NULL,"
-        "  `comment_id` varchar(32) NOT NULL,"
-        "  `post_id` int NOT NULL, "
+        "  `comment_id` bigint NOT NULL,"
+        "  `post_id` bigint NOT NULL, "
         "  `publish_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP"
         ") ENGINE=InnoDB")
 

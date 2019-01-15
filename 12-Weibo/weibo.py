@@ -9,8 +9,10 @@ import json
 import argparse
 from media_loader import MediaLoader
 import datetime
+from mysql_manager import MysqlManager
 
 cookie_fn = 'cookie'
+mysql_manager = MysqlManager(2)
 
 class WeiboFeedCrawler:
     login_url = "https://passport.weibo.cn/sso/login"
@@ -96,24 +98,30 @@ class WeiboFeedCrawler:
             else:
                 render_data = render_data['status']
 
-            self.id = render_data['id']
-            self.mid = render_data['mid']
-            self.reply_count = render_data['comments_count']
-            self.post_title = self.extract_item('title', render_data['page_info'])
-            self.post_content1 = self.extract_item('content1', render_data['page_info'])
-            self.post_content2 = self.extract_item('content2', render_data['page_info'])
+            self.post = {}
+
+            self.post['id'] = render_data['id']
+            self.post['mid'] = render_data['mid']
+            self.post['url'] = self.post_url
+            self.post['title'] = self.extract_item('title', render_data['page_info'])
+            self.post['content1'] = self.extract_item('content1', render_data['page_info'])
+            self.post['content2'] = self.extract_item('content2', render_data['page_info'])
+            self.post['user_name'] = self.extract_item('screen_name', render_data['user'])
+            self.post['user_id'] = self.extract_item('id', render_data['user'])
+            self.post['comment_cnt'] = render_data['comments_count']
+            self.post['like_cnt'] = render_data['attitudes_count']
+            self.post['repost_cnt'] = render_data['reposts_count']
+            self.post['publish_time'] = self.convert_time(render_data['created_at'])
 
             # resize the limit according to size of replies
             self.reply_limit = min(self.reply_limit, self.reply_count)
 
-            self.post_data = render_data
-
             # start downloader to get pics and videos
-            self.media_type, self.media_files = MediaLoader(self.post_data).get_media_files()
+            self.media_type, self.media_files = MediaLoader(render_data).get_media_files()
 
-            print(self.post_title)
-            print(self.post_content1)
-            print(self.post_content2)
+            print(self.post['title'])
+            print(self.post['content1'])
+            print(self.post['content2'])
             print("============================================================")
 
     def get_replies(self):
@@ -132,9 +140,11 @@ class WeiboFeedCrawler:
         for reply in replies['data']['data']:
             r['text'] = reply['text']
             r['text'] = self.pattern.sub('', r['text'])
-            r['time'] = reply['created_at']
-            r['screen_name'] = reply['user']['screen_name']
+            r['publish_time'] = self.convert_time(reply['created_at'])
+            r['user_name'] = reply['user']['screen_name']
             r['user_id'] = reply['user']['id']
+            r['post_id'] = reply['id']
+            mysql_manager.insert_data(r, 'comment')
             self.replies.append(r)
             # print('Reply:-------------\r\n', r_text)
         
@@ -146,14 +156,6 @@ class WeiboFeedCrawler:
         self.get_post()
         self.get_replies()
 
-        ret = {}
-        ret['title'] = self.post_title
-        ret['content'] = self.post_content2
-        ret['comments'] = self.replies
-        ret['type'] = self.media_type
-        ret['media_files'] = self.media_files
-
-        return ret
 
 class arguments:
     pass
