@@ -37,7 +37,7 @@ class WeiboCrawler():
 
     pattern = re.compile('<.*?>')
 
-    def __init__(self, limit = 500 ):
+    def __init__(self, limit = 200 ):
         self.reply_limit = limit
         self.mm = MysqlManager(4)
 
@@ -97,11 +97,13 @@ class WeiboCrawler():
     def convert_time_format(self, ts):
         return datetime.datetime.strptime(ts, "%a %b %d %H:%M:%S %z %Y").strftime('%Y-%m-%d %H:%M:%S')
 
-    def get_post(self, id):
-        url = self.post_url.format(id)
+    def get_post(self, url, id = None):
         response = requests.get(url, headers=self.login_headers)
         post_data_str = self.extract_var(response.text)
         post_data = json.loads(post_data_str)[0]['status']
+        # In case of re-post
+        if 'retweeted_status' in post_data:
+            render_data = post_data['retweeted_status']
 
         self.post = {}
 
@@ -121,18 +123,18 @@ class WeiboCrawler():
         self.save_data( self.post['id'], post_data_str)
         self.mm.insert_data('post', self.post)
 
-        post_pics = pic_downloader().get_media_files(post_data['pics'])
-        for pic in post_pics:
+        self.post_pics = pic_downloader().get_media_files(post_data['pics'])
+        for pic in self.post_pics:
             p = {}
-            p['post_id'] = id
+            p['post_id'] = self.post['id']
             p['url'] = pic
             self.mm.insert_data('pic', p)
     
-    def get_comments(self, id, max_id):
+    def get_comments(self, self.post['id'], max_id):
         if max_id == 0:
-            url = self.reply_url_0.format(id, id)
+            url = self.reply_url_0.format(self.post['id'], self.post['id'])
         else:
-            url = self.reply_url_1.format(id, id, max_id)
+            url = self.reply_url_1.format(self.post['id'], self.post['id'], max_id)
 
         response = requests.get(url, headers=self.login_headers)
         reply_json_obj = json.loads(response.text)
@@ -144,7 +146,7 @@ class WeiboCrawler():
         for r in reply_data:
             comment['created_at'] = self.convert_time_format(r['created_at'])
             comment['id'] = r['id']
-            comment['post_id'] = id
+            comment['post_id'] = self.post['id']
             comment['text'] = self.cleanup_text(r['text'])
             r_data_user = r['user']
             comment['profile_image_url'] = r_data_user['profile_image_url']
@@ -163,6 +165,12 @@ class WeiboCrawler():
 
         time.sleep(2)
         self.get_comments(self.post['id'], reply_json_obj['data']['max_id'])
+    
+    def run(self, url):
+        self.get_post(url)
+        self.get_comments(wb_crawler.post['id'], 0)
+
+        return self.post, self.comments, self.post_pics
         
 
 if __name__ == "__main__":
@@ -175,9 +183,8 @@ if __name__ == "__main__":
 
     if arg_len > 2:
         limit = sys.argv[2]
-    id = sys.argv[1]
+    url = sys.argv[1]
 
     wb_crawler = WeiboCrawler(limit)
     wb_crawler.login()
-    wb_crawler.get_post(id)
-    wb_crawler.get_comments(id, 0)
+    wb_crawler.run(url)
